@@ -9,73 +9,73 @@
 <body>
     <div class="container">
         <header>
-            <h1>Excel to Word Document Filler</h1>
-            <p>Upload Excel data and a Word template to generate filled documents</p>
+            <h1>Công cụ hỗ trợ điền dữ liệu từ Excel vào Word</h1>
+            <p>Tải lên dữ liệu Excel và mẫu Word để tạo tài liệu đã điền thông tin</p>
         </header>
 
         <main>
             <section class="upload-section">
                 <div class="file-upload">
-                    <h2>Step 1: Upload Files</h2>
+                    <h2>Bước 1: Tải lên tệp tin</h2>
                     
                     <div class="upload-box">
-                        <label for="excel-file">Select Excel File:</label>
+                        <label for="excel-file">Chọn tệp Excel:</label>
                         <input type="file" id="excel-file" accept=".xlsx,.xls">
-                        <div class="file-info" id="excel-file-info">No file selected</div>
+                        <div class="file-info" id="excel-file-info">Chưa chọn tệp tin</div>
                     </div>
 
                     <div class="upload-box">
-                        <label for="word-template">Select Word Template:</label>
+                        <label for="word-template">Chọn mẫu Word:</label>
                         <input type="file" id="word-template" accept=".docx">
-                        <div class="file-info" id="word-template-info">No file selected</div>
+                        <div class="file-info" id="word-template-info">Chưa chọn tệp tin</div>
                         <div class="file-format-info">
-                            <strong>Important:</strong> Only .docx files are supported (newer Word format). 
-                            If you have a .doc file, please open it in Word and save as .docx format.
+                            <strong>Quan trọng:</strong> Chỉ hỗ trợ tệp .docx (định dạng Word mới). 
+                            Nếu bạn có tệp .doc, vui lòng mở trong Word và lưu dưới định dạng .docx.
                         </div>
                     </div>
                 </div>
             </section>
 
             <section class="mapping-section" id="mapping-section" style="display: none;">
-                <h2>Step 2: Map Excel Columns to Word Placeholders</h2>
-                <p>Select which Excel columns should be used for each placeholder in your Word template.</p>
+                <h2>Bước 2: Ánh xạ cột Excel với placeholder trong Word</h2>
+                <p>Chọn cột Excel nào sẽ được sử dụng cho mỗi placeholder trong mẫu Word của bạn.</p>
                 
                 <div class="mapping-container" id="mapping-container">
                     <!-- Mapping fields will be generated here -->
                 </div>
                 
                 <div class="placeholder-info">
-                    <h3>Template Placeholders Format</h3>
-                    <p>Your Word document should contain placeholders in the format: <code>{placeholder_name}</code></p>
+                    <h3>Định dạng Placeholder trong mẫu</h3>
+                    <p>Tài liệu Word của bạn nên chứa các placeholder theo định dạng: <code>{tên_placeholder}</code></p>
                 </div>
             </section>
 
             <section class="preview-section" id="preview-section" style="display: none;">
-                <h2>Step 3: Preview Files Content</h2>
+                <h2>Bước 3: Xem trước nội dung tệp tin</h2>
                 <div class="excel-preview">
-                    <h3>📊 Excel Data Preview</h3>
-                    <p>Review your Excel data below. You can adjust the number of rows displayed.</p>
+                    <h3>📊 Xem trước dữ liệu Excel</h3>
+                    <p>Xem lại dữ liệu Excel bên dưới. Bạn có thể điều chỉnh số hàng hiển thị.</p>
                     <div class="table-container" id="excel-preview"></div>
                 </div>
                 
                 <div class="word-preview" id="word-preview-section" style="display: none;">
-                    <h3>📄 Word Template Preview</h3>
-                    <p>This is the actual content of your Word document. Placeholders that will be filled with data are highlighted in <span class="placeholder-highlight-example">yellow</span>.</p>
-                    <p>💡 Click on any highlighted placeholder to jump to its mapping field.</p>
+                    <h3>📄 Xem trước mẫu Word</h3>
+                    <p>Đây là nội dung thực tế của tài liệu Word. Các placeholder sẽ được điền dữ liệu được tô sáng màu <span class="placeholder-highlight-example">vàng</span>.</p>
+                    <p>💡 Nhấp vào bất kỳ placeholder được tô sáng nào để chuyển đến trường ánh xạ của nó.</p>
                     <div class="word-content" id="word-preview-content"></div>
                 </div>
             </section>
 
             <section class="generate-section">
-                <button id="generate-btn" class="primary-btn" disabled>Generate Documents for All Rows</button>
-                <button id="debug-btn" class="secondary-btn" style="margin-left: 10px;">Show Debug Info</button>
+                <button id="generate-btn" class="primary-btn" disabled>Tạo tài liệu cho tất cả hàng</button>
+                <button id="debug-btn" class="secondary-btn" style="margin-left: 10px;">Hiển thị thông tin Debug</button>
                 <div id="debug-area" style="display: none; margin-top: 15px;">
-                    <h3>Debug Information</h3>
+                    <h3>Thông tin Debug</h3>
                     <pre id="debug-content"></pre>
                 </div>
                 <div id="download-area" style="display: none;">
-                    <h3>Your documents are ready!</h3>
-                    <a id="download-link" class="download-btn">Download Document</a>
+                    <h3>Tài liệu của bạn đã sẵn sàng!</h3>
+                    <a id="download-link" class="download-btn">Tải xuống tài liệu</a>
                 </div>
             </section>
         </main>

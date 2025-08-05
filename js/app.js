@@ -3,6 +3,7 @@ let excelData = null;
 let excelHeaders = [];
 let wordTemplateContent = null;
 let wordPlaceholders = [];
+let templateName = ''; // Store template name for filename prefix
 
 // Document ready function
 document.addEventListener('DOMContentLoaded', function() {
@@ -21,7 +22,7 @@ function handleExcelUpload(event) {
     if (!file) return;
 
     // Update file info display
-    document.getElementById('excel-file-info').textContent = `Selected: ${file.name}`;
+    document.getElementById('excel-file-info').textContent = `Đã chọn: ${file.name}`;
     
     // Read the Excel file
     const reader = new FileReader();
@@ -50,9 +51,15 @@ function handleExcelUpload(event) {
             
             // Check if we can enable mapping
             checkEnableMappingSection();
+            
+            // Auto-update debug info if it's visible
+            updateDebugInfoIfVisible();
         } catch (error) {
             console.error('Error processing Excel file:', error);
-            alert('Error processing Excel file. Please check the format and try again.');
+            alert('Lỗi khi xử lý tệp Excel. Vui lòng kiểm tra định dạng và thử lại.');
+            
+            // Auto-update debug info if it's visible
+            updateDebugInfoIfVisible();
         }
     };
     
@@ -69,14 +76,21 @@ function handleWordTemplateUpload(event) {
     // Check file extension
     const fileName = file.name.toLowerCase();
     if (!fileName.endsWith('.docx')) {
-        alert('Please upload a .docx file (newer Word format). If you have a .doc file, open it in Word and save as .docx format.');
+        alert('Vui lòng tải lên tệp .docx (định dạng Word mới). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.');
         event.target.value = ''; // Clear the file input
-        document.getElementById('word-template-info').textContent = 'No file selected';
+        document.getElementById('word-template-info').textContent = 'Chưa chọn tệp tin';
+        templateName = ''; // Clear template name
+        
+        // Auto-update debug info if it's visible
+        updateDebugInfoIfVisible();
         return;
     }
 
     // Update file info display
-    document.getElementById('word-template-info').textContent = `Selected: ${file.name}`;
+    document.getElementById('word-template-info').textContent = `Đã chọn: ${file.name}`;
+    
+    // Store template name for filename prefix (remove extension and clean for filename)
+    templateName = file.name.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
     
     // Read the Word template file
     const reader = new FileReader();
@@ -97,19 +111,26 @@ function handleWordTemplateUpload(event) {
             
             // Check if we can enable mapping
             checkEnableMappingSection();
+            
+            // Auto-update debug info if it's visible
+            updateDebugInfoIfVisible();
         } catch (error) {
             console.error('Error processing Word template:', error);
             
             // Provide specific error message for format issues
             if (error.message && error.message.includes('zip')) {
-                alert('The uploaded file is not a valid .docx format. Please ensure you are uploading a .docx file (not .doc). If you have a .doc file, open it in Word and save as .docx format.');
+                alert('Tệp tải lên không phải định dạng .docx hợp lệ. Vui lòng đảm bảo bạn đang tải lên tệp .docx (không phải .doc). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.');
             } else {
-                alert('Error processing Word template. Please check the format and try again.');
+                alert('Lỗi khi xử lý mẫu Word. Vui lòng kiểm tra định dạng và thử lại.');
             }
             
             // Clear the file input
             event.target.value = '';
-            document.getElementById('word-template-info').textContent = 'No file selected';
+            document.getElementById('word-template-info').textContent = 'Chưa chọn tệp tin';
+            templateName = ''; // Clear template name
+            
+            // Auto-update debug info if it's visible
+            updateDebugInfoIfVisible();
         }
     };
     
@@ -394,7 +415,10 @@ function checkEnableMappingSection() {
         // Update button text to show how many documents will be generated
         const generateBtn = document.getElementById('generate-btn');
         const rowCount = excelData ? excelData.length : 0;
-        generateBtn.textContent = `Generate ${rowCount} Documents (One per Row)`;
+        generateBtn.textContent = `Tạo ${rowCount} tài liệu (Một cho mỗi hàng)`;
+        
+        // Auto-update debug info if it's visible
+        updateDebugInfoIfVisible();
     }
 }
 
@@ -410,7 +434,7 @@ function createMappingFields() {
         mappingItem.className = 'mapping-item';
         
         const label = document.createElement('label');
-        label.textContent = `Map "${placeholder}" to:`;
+        label.textContent = `Ánh xạ "${placeholder}" với:`;
         label.setAttribute('for', `map-${placeholder}`);
         
         const select = document.createElement('select');
@@ -418,10 +442,15 @@ function createMappingFields() {
         select.name = `map-${placeholder}`;
         select.setAttribute('data-placeholder', placeholder);
         
+        // Add event listener to update debug info when mapping changes
+        select.addEventListener('change', function() {
+            updateDebugInfoIfVisible();
+        });
+        
         // Add empty option
         const emptyOption = document.createElement('option');
         emptyOption.value = '';
-        emptyOption.textContent = '-- Select Excel Column --';
+        emptyOption.textContent = '-- Chọn cột Excel --';
         select.appendChild(emptyOption);
         
         // Add options for each Excel header
@@ -442,6 +471,19 @@ function createMappingFields() {
         mappingItem.appendChild(select);
         mappingContainer.appendChild(mappingItem);
     });
+    
+    // Auto-update debug info if it's visible
+    updateDebugInfoIfVisible();
+}
+
+/**
+ * Update debug info if the debug area is currently visible
+ */
+function updateDebugInfoIfVisible() {
+    const debugArea = document.getElementById('debug-area');
+    if (debugArea && debugArea.style.display !== 'none') {
+        generateDebugInfo();
+    }
 }
 
 /**
@@ -589,12 +631,12 @@ function generateDocument() {
     try {
         // Check if we have required data
         if (!excelData || !wordTemplateContent || excelData.length === 0) {
-            alert('Please upload both Excel data and Word template before generating.');
+            alert('Vui lòng tải lên cả dữ liệu Excel và mẫu Word trước khi tạo tài liệu.');
             return;
         }
         
         if (!wordPlaceholders || wordPlaceholders.length === 0) {
-            alert('No placeholders found in the Word template. Please ensure your template contains placeholders in the format {placeholder_name}.');
+            alert('Không tìm thấy placeholder trong mẫu Word. Vui lòng đảm bảo mẫu của bạn chứa placeholder theo định dạng {tên_placeholder}.');
             return;
         }
         
@@ -611,7 +653,7 @@ function generateDocument() {
         });
         
         if (mappedCount === 0) {
-            alert('Please map at least one Excel column to a Word placeholder before generating the document.');
+            alert('Vui lòng ánh xạ ít nhất một cột Excel với một placeholder trong Word trước khi tạo tài liệu.');
             return;
         }
         
@@ -623,11 +665,11 @@ function generateDocument() {
         const downloadArea = document.getElementById('download-area');
         downloadArea.style.display = 'block';
         downloadArea.innerHTML = `
-            <h3>Generating ${excelData.length} documents...</h3>
+            <h3>Đang tạo ${excelData.length} tài liệu...</h3>
             <div class="progress-bar">
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
-            <p id="progress-text">Starting...</p>
+            <p id="progress-text">Đang bắt đầu...</p>
         `;
         
         // Scroll to download area
@@ -636,27 +678,33 @@ function generateDocument() {
         // Generate documents for each row
         generateMultipleDocuments(mappingConfig);
         
+        // Auto-update debug info if it's visible
+        updateDebugInfoIfVisible();
+        
     } catch (error) {
         console.error('Unexpected error generating document:', error);
         
         // Provide more specific error message based on the error type
-        let errorMessage = 'Error generating document. ';
+        let errorMessage = 'Lỗi khi tạo tài liệu. ';
         
         if (error.message) {
             if (error.message.includes('corrupted')) {
-                errorMessage += 'The Word template appears to be corrupted. Please try a different file.';
+                errorMessage += 'Mẫu Word có vẻ bị hỏng. Vui lòng thử tệp khác.';
             } else if (error.message.includes('placeholder') || error.message.includes('template')) {
-                errorMessage += 'There seems to be an issue with the placeholders in your template. Please ensure they are formatted as {placeholder_name}.';
+                errorMessage += 'Có vẻ có vấn đề với placeholder trong mẫu của bạn. Vui lòng đảm bảo chúng được định dạng như {tên_placeholder}.';
             } else if (error.message.includes('zip') || error.message.includes('archive')) {
-                errorMessage += 'The Word template could not be processed. Please ensure it is a valid .docx file.';
+                errorMessage += 'Không thể xử lý mẫu Word. Vui lòng đảm bảo đó là tệp .docx hợp lệ.';
             } else {
-                errorMessage += 'Please check your mapping and try again. Error: ' + error.message;
+                errorMessage += 'Vui lòng kiểm tra ánh xạ và thử lại. Lỗi: ' + error.message;
             }
         } else {
-            errorMessage += 'Please check your mapping and try again.';
+            errorMessage += 'Vui lòng kiểm tra ánh xạ và thử lại.';
         }
         
         alert(errorMessage);
+        
+        // Auto-update debug info if it's visible
+        updateDebugInfoIfVisible();
     }
 }
 
@@ -679,7 +727,7 @@ async function generateMultipleDocuments(mappingConfig) {
             // Update progress
             const progress = ((i + 1) / totalRows) * 100;
             progressFill.style.width = progress + '%';
-            progressText.textContent = `Processing row ${i + 1} of ${totalRows}...`;
+            progressText.textContent = `Đang xử lý hàng ${i + 1} / ${totalRows}...`;
             
             // Allow UI to update
             await new Promise(resolve => setTimeout(resolve, 50));
@@ -759,14 +807,22 @@ async function generateMultipleDocuments(mappingConfig) {
                     if (dataRow[col]) {
                         const nameValue = dataRow[col].toString().trim();
                         if (nameValue) {
-                            // Clean filename (remove invalid characters)
-                            filename = nameValue.replace(/[<>:"/\\|?*]/g, '_');
+                            // Clean filename (remove invalid characters and replace spaces with underscores)
+                            filename = nameValue.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
                             break;
                         }
                     }
                 }
                 
-                filename += `_${new Date().toISOString().slice(0, 10)}.docx`;
+                // Add template name prefix
+                if (templateName) {
+                    filename = `${templateName}_${filename}`;
+                }
+                
+                // Format date as YYYY_MM_DD
+                const today = new Date();
+                const formattedDate = `${today.getFullYear()}_${String(today.getMonth() + 1).padStart(2, '0')}_${String(today.getDate()).padStart(2, '0')}`;
+                filename += `_${formattedDate}.docx`;
                 
                 // Store file info
                 generatedFiles.push({
@@ -790,17 +846,23 @@ async function generateMultipleDocuments(mappingConfig) {
         
         // Update progress to complete
         progressFill.style.width = '100%';
-        progressText.textContent = 'Generation complete!';
+        progressText.textContent = 'Hoàn thành tạo tài liệu!';
         
         // Display download links
         displayDownloadLinks(generatedFiles);
         
+        // Auto-update debug info if it's visible
+        updateDebugInfoIfVisible();
+        
     } catch (error) {
         console.error('Error in batch generation:', error);
         downloadArea.innerHTML = `
-            <h3>Error generating documents</h3>
-            <p>An error occurred during batch generation: ${error.message}</p>
+            <h3>Lỗi khi tạo tài liệu</h3>
+            <p>Đã xảy ra lỗi trong quá trình tạo hàng loạt: ${error.message}</p>
         `;
+        
+        // Auto-update debug info if it's visible
+        updateDebugInfoIfVisible();
     }
 }
 
@@ -814,13 +876,13 @@ function displayDownloadLinks(generatedFiles) {
     const errorFiles = generatedFiles.filter(file => file.error);
     
     let html = `
-        <h3>Generated ${successfulFiles.length} documents successfully!</h3>
+        <h3>Đã tạo thành công ${successfulFiles.length} tài liệu!</h3>
     `;
     
     if (successfulFiles.length > 1) {
         html += `
             <div class="download-all-section">
-                <button id="download-all-btn" class="download-btn">Download All as ZIP</button>
+                <button id="download-all-btn" class="download-btn">Tải xuống tất cả dưới dạng ZIP</button>
             </div>
             <hr>
         `;
@@ -832,10 +894,10 @@ function displayDownloadLinks(generatedFiles) {
         const url = URL.createObjectURL(file.blob);
         html += `
             <div class="download-item">
-                <span class="file-info">Row ${file.rowIndex}: ${file.filename}</span>
+                <span class="file-info"> ${file.filename}</span>
                 <div class="download-actions">
-                    <a href="${url}" download="${file.filename}" class="download-link-small">Download</a>
-                    <button onclick="testDocumentOpen('${url}', '${file.filename}')" class="test-btn" title="Test if document opens correctly">Test</button>
+                    <a href="${url}" download="${file.filename}" class="download-link-small">Tải xuống</a>
+                    <button onclick="testDocumentOpen('${url}', '${file.filename}')" class="test-btn" title="Kiểm tra xem tài liệu có mở được không">Kiểm tra</button>
                 </div>
             </div>
         `;
@@ -846,13 +908,13 @@ function displayDownloadLinks(generatedFiles) {
     if (errorFiles.length > 0) {
         html += `
             <div class="error-section">
-                <h4>Errors (${errorFiles.length} files):</h4>
+                <h4>Lỗi (${errorFiles.length} tệp):</h4>
         `;
         
         errorFiles.forEach(file => {
             html += `
                 <div class="error-item">
-                    Row ${file.rowIndex}: ${file.error}
+                    Hàng ${file.rowIndex}: ${file.error}
                 </div>
             `;
         });
@@ -901,7 +963,7 @@ async function downloadAllAsZip(files) {
         
     } catch (error) {
         console.error('Error creating ZIP file:', error);
-        alert('Error creating ZIP file. Please download files individually.');
+        alert('Lỗi khi tạo tệp ZIP. Vui lòng tải xuống từng tệp riêng lẻ.');
     }
 }
 
@@ -910,31 +972,46 @@ async function downloadAllAsZip(files) {
  */
 function showDebugInfo() {
     const debugArea = document.getElementById('debug-area');
+    
+    // Toggle visibility and generate new content
+    if (debugArea.style.display === 'none' || debugArea.style.display === '') {
+        debugArea.style.display = 'block';
+        generateDebugInfo();
+    } else {
+        debugArea.style.display = 'none';
+    }
+}
+
+/**
+ * Generate and display debug information
+ */
+function generateDebugInfo() {
     const debugContent = document.getElementById('debug-content');
     
-    let debugInfo = 'DEBUG INFORMATION\n';
+    let debugInfo = 'THÔNG TIN DEBUG\n';
     debugInfo += '='.repeat(50) + '\n\n';
     
     // Excel data info
-    debugInfo += '📊 EXCEL DATA:\n';
+    debugInfo += '📊 DỮ LIỆU EXCEL:\n';
     if (excelData && excelData.length > 0) {
-        debugInfo += `- Rows: ${excelData.length}\n`;
-        debugInfo += `- Columns: ${excelHeaders.length}\n`;
-        debugInfo += `- Headers: ${excelHeaders.join(', ')}\n`;
-        debugInfo += `- First row data: ${JSON.stringify(excelData[0], null, 2)}\n`;
+        debugInfo += `- Số hàng: ${excelData.length}\n`;
+        debugInfo += `- Số cột: ${excelHeaders.length}\n`;
+        debugInfo += `- Tên cột: ${excelHeaders.join(', ')}\n`;
+        debugInfo += `- Dữ liệu hàng đầu tiên: ${JSON.stringify(excelData[0], null, 2)}\n`;
     } else {
-        debugInfo += '- No Excel data loaded\n';
+        debugInfo += '- Chưa tải dữ liệu Excel\n';
     }
     
-    debugInfo += '\n📄 WORD TEMPLATE:\n';
+    debugInfo += '\n📄 MẪU WORD:\n';
     if (wordTemplateContent) {
-        debugInfo += `- Template loaded: Yes (${(wordTemplateContent.byteLength / 1024).toFixed(2)} KB)\n`;
-        debugInfo += `- Placeholders found: ${wordPlaceholders.length}\n`;
+        debugInfo += `- Đã tải mẫu: Có (${(wordTemplateContent.byteLength / 1024).toFixed(2)} KB)\n`;
+        debugInfo += `- Tên mẫu: ${templateName || 'Không xác định'}\n`;
+        debugInfo += `- Số placeholder tìm thấy: ${wordPlaceholders.length}\n`;
         if (wordPlaceholders.length > 0) {
-            debugInfo += `- Placeholder list: ${wordPlaceholders.join(', ')}\n`;
+            debugInfo += `- Danh sách placeholder: ${wordPlaceholders.join(', ')}\n`;
         } else {
-            debugInfo += '- No placeholders detected!\n';
-            debugInfo += '\n🔍 PLACEHOLDER DETECTION ANALYSIS:\n';
+            debugInfo += '- Không phát hiện placeholder!\n';
+            debugInfo += '\n🔍 PHÂN TÍCH PHÁT HIỆN PLACEHOLDER:\n';
             
             // Try to analyze the document for common issues
             try {
@@ -943,18 +1020,18 @@ function showDebugInfo() {
                 
                 // Check for various bracket formats
                 const bracketChecks = [
-                    { name: 'Curly braces {}', pattern: /{[^}]*}/g },
-                    { name: 'Square brackets []', pattern: /\[[^\]]*\]/g },
-                    { name: 'Angle brackets <>', pattern: /<[^>]*>/g },
-                    { name: 'Parentheses ()', pattern: /\([^)]*\)/g }
+                    { name: 'Dấu ngoặc nhọn {}', pattern: /{[^}]*}/g },
+                    { name: 'Dấu ngoặc vuông []', pattern: /\[[^\]]*\]/g },
+                    { name: 'Dấu ngoặc nhọn <>', pattern: /<[^>]*>/g },
+                    { name: 'Dấu ngoặc tròn ()', pattern: /\([^)]*\)/g }
                 ];
                 
                 bracketChecks.forEach(check => {
                     const matches = documentXml.match(check.pattern);
                     if (matches && matches.length > 0) {
-                        debugInfo += `- Found ${matches.length} instances of ${check.name}\n`;
-                        if (check.name.includes('Curly braces')) {
-                            debugInfo += `  Examples: ${matches.slice(0, 5).join(', ')}\n`;
+                        debugInfo += `- Tìm thấy ${matches.length} trường hợp ${check.name}\n`;
+                        if (check.name.includes('ngoặc nhọn {}')) {
+                            debugInfo += `  Ví dụ: ${matches.slice(0, 5).join(', ')}\n`;
                         }
                     }
                 });
@@ -964,42 +1041,42 @@ function showDebugInfo() {
                 const hasParagraphs = documentXml.includes('<w:p>');
                 const hasText = documentXml.includes('<w:t>');
                 
-                debugInfo += `- Document structure: Body=${hasDocumentBody}, Paragraphs=${hasParagraphs}, Text=${hasText}\n`;
+                debugInfo += `- Cấu trúc tài liệu: Body=${hasDocumentBody}, Đoạn văn=${hasParagraphs}, Văn bản=${hasText}\n`;
                 
                 // Extract visible text content
                 const textElements = documentXml.match(/<w:t[^>]*>([^<]*)<\/w:t>/g);
                 if (textElements && textElements.length > 0) {
                     const visibleText = textElements.map(el => el.replace(/<[^>]*>/g, '')).join(' ');
-                    debugInfo += `- Visible text sample: "${visibleText.substring(0, 200)}..."\n`;
+                    debugInfo += `- Mẫu văn bản có thể nhìn thấy: "${visibleText.substring(0, 200)}..."\n`;
                     
                     // Check if the visible text contains potential placeholders
                     const textPlaceholders = visibleText.match(/{[^}]*}/g);
                     if (textPlaceholders) {
-                        debugInfo += `- Potential placeholders in text: ${textPlaceholders.join(', ')}\n`;
+                        debugInfo += `- Placeholder tiềm năng trong văn bản: ${textPlaceholders.join(', ')}\n`;
                     }
                 } else {
-                    debugInfo += '- No visible text found in document\n';
+                    debugInfo += '- Không tìm thấy văn bản hiển thị trong tài liệu\n';
                 }
                 
             } catch (analysisError) {
-                debugInfo += `- Error analyzing document: ${analysisError.message}\n`;
+                debugInfo += `- Lỗi khi phân tích tài liệu: ${analysisError.message}\n`;
                 
                 // Check for common format issues
                 if (analysisError.message.includes('zip') || analysisError.message.includes('central directory')) {
-                    debugInfo += '\n❌ FILE FORMAT ISSUE DETECTED:\n';
-                    debugInfo += '- This appears to be a .doc file (old Word format)\n';
-                    debugInfo += '- Only .docx files (new Word format) are supported\n';
-                    debugInfo += '- SOLUTION: Open your .doc file in Microsoft Word\n';
-                    debugInfo += '- Go to File > Save As > Choose "Word Document (.docx)" format\n';
-                    debugInfo += '- Then upload the new .docx file\n';
+                    debugInfo += '\n❌ PHÁT HIỆN VẤN ĐỀ ĐỊNH DẠNG TẬP TIN:\n';
+                    debugInfo += '- Đây có vẻ là tệp .doc (định dạng Word cũ)\n';
+                    debugInfo += '- Chỉ hỗ trợ tệp .docx (định dạng Word mới)\n';
+                    debugInfo += '- GIẢI PHÁP: Mở tệp .doc trong Microsoft Word\n';
+                    debugInfo += '- Vào File > Save As > Chọn định dạng "Word Document (.docx)"\n';
+                    debugInfo += '- Sau đó tải lên tệp .docx mới\n';
                 }
             }
         }
     } else {
-        debugInfo += '- No Word template loaded\n';
+        debugInfo += '- Chưa tải mẫu Word\n';
     }
     
-    debugInfo += '\n🔗 MAPPING CONFIGURATION:\n';
+    debugInfo += '\n🔗 CẤU HÌNH ÁNH XẠ:\n';
     const mappingConfig = {};
     let mappedCount = 0;
     
@@ -1007,50 +1084,49 @@ function showDebugInfo() {
         const select = document.querySelector(`select[data-placeholder="${placeholder}"]`);
         if (select) {
             const value = select.value;
-            mappingConfig[placeholder] = value || '(not mapped)';
+            mappingConfig[placeholder] = value || '(chưa ánh xạ)';
             if (value) mappedCount++;
         }
     });
     
-    debugInfo += `- Mapped placeholders: ${mappedCount}/${wordPlaceholders.length}\n`;
+    debugInfo += `- Placeholder đã ánh xạ: ${mappedCount}/${wordPlaceholders.length}\n`;
     if (Object.keys(mappingConfig).length > 0) {
-        debugInfo += `- Mapping details:\n`;
+        debugInfo += `- Chi tiết ánh xạ:\n`;
         Object.keys(mappingConfig).forEach(placeholder => {
             debugInfo += `  • ${placeholder} → ${mappingConfig[placeholder]}\n`;
         });
     }
     
-    debugInfo += '\n🔧 LIBRARY STATUS:\n';
-    debugInfo += `- XLSX library: ${typeof XLSX !== 'undefined' ? 'Loaded' : 'Missing'}\n`;
-    debugInfo += `- docxtemplater: ${typeof docxtemplater !== 'undefined' ? 'Loaded' : 'Missing'}\n`;
-    debugInfo += `- PizZip: ${typeof PizZip !== 'undefined' ? 'Loaded' : 'Missing'}\n`;
-    debugInfo += `- mammoth: ${typeof mammoth !== 'undefined' ? 'Loaded' : 'Missing'}\n`;
+    debugInfo += '\n🔧 TRẠNG THÁI THƯ VIỆN:\n';
+    debugInfo += `- Thư viện XLSX: ${typeof XLSX !== 'undefined' ? 'Đã tải' : 'Thiếu'}\n`;
+    debugInfo += `- docxtemplater: ${typeof docxtemplater !== 'undefined' ? 'Đã tải' : 'Thiếu'}\n`;
+    debugInfo += `- PizZip: ${typeof PizZip !== 'undefined' ? 'Đã tải' : 'Thiếu'}\n`;
+    debugInfo += `- mammoth: ${typeof mammoth !== 'undefined' ? 'Đã tải' : 'Thiếu'}\n`;
     
-    debugInfo += '\n💡 RECOMMENDATIONS:\n';
+    debugInfo += '\n💡 GỢI Ý:\n';
     if (!excelData || excelData.length === 0) {
-        debugInfo += '- Upload an Excel file with data\n';
+        debugInfo += '- Tải lên tệp Excel có dữ liệu\n';
     }
     if (!wordTemplateContent) {
-        debugInfo += '- Upload a Word template with placeholders\n';
-        debugInfo += '- Make sure to use .docx format (not .doc)\n';
+        debugInfo += '- Tải lên mẫu Word có placeholder\n';
+        debugInfo += '- Đảm bảo sử dụng định dạng .docx (không phải .doc)\n';
     }
     if (wordPlaceholders.length === 0) {
-        debugInfo += '- Ensure your Word template contains placeholders in format {placeholder_name}\n';
-        debugInfo += '- Check that placeholders are not split across text runs in Word\n';
-        debugInfo += '- Try creating placeholders by typing them directly (not copy-paste)\n';
-        debugInfo += '- Avoid special formatting within placeholder text\n';
-        debugInfo += '- If using .doc format, convert to .docx first\n';
+        debugInfo += '- Đảm bảo mẫu Word có placeholder theo định dạng {tên_placeholder}\n';
+        debugInfo += '- Kiểm tra rằng placeholder không bị tách ra thành nhiều đoạn văn bản trong Word\n';
+        debugInfo += '- Thử tạo placeholder bằng cách gõ trực tiếp (không copy-paste)\n';
+        debugInfo += '- Tránh định dạng đặc biệt trong văn bản placeholder\n';
+        debugInfo += '- Nếu đang dùng định dạng .doc, hãy chuyển đổi sang .docx trước\n';
     }
     if (mappedCount === 0 && wordPlaceholders.length > 0) {
-        debugInfo += '- Map at least one Excel column to a Word placeholder\n';
+        debugInfo += '- Ánh xạ ít nhất một cột Excel với một placeholder trong Word\n';
     }
     
     if (excelData && wordTemplateContent && wordPlaceholders.length > 0 && mappedCount > 0) {
-        debugInfo += '- All requirements met! Try generating the document.\n';
+        debugInfo += '- Tất cả yêu cầu đã đáp ứng! Thử tạo tài liệu.\n';
     }
     
     debugContent.textContent = debugInfo;
-    debugArea.style.display = debugArea.style.display === 'none' ? 'block' : 'none';
 }
 
 /**
@@ -1069,21 +1145,21 @@ function testDocumentOpen(url, filename) {
             const isValidSize = blob.size > 1000; // At least 1KB
             const hasCorrectType = blob.type.includes('wordprocessingml') || blob.type.includes('document');
             
-            let message = `File: ${filename}\n`;
-            message += `Size: ${(blob.size / 1024).toFixed(1)} KB\n`;
-            message += `Type: ${blob.type}\n`;
-            message += `Valid size: ${isValidSize ? '✓' : '✗'}\n`;
-            message += `Correct type: ${hasCorrectType ? '✓' : '✗'}\n\n`;
+            let message = `Tệp: ${filename}\n`;
+            message += `Kích thước: ${(blob.size / 1024).toFixed(1)} KB\n`;
+            message += `Loại: ${blob.type}\n`;
+            message += `Kích thước hợp lệ: ${isValidSize ? '✓' : '✗'}\n`;
+            message += `Loại đúng: ${hasCorrectType ? '✓' : '✗'}\n\n`;
             
             if (isValidSize && hasCorrectType) {
-                message += 'Document appears to be valid. Try opening it!';
+                message += 'Tài liệu có vẻ hợp lệ. Thử mở nó!';
             } else {
-                message += 'Document may be corrupted. Check the template and data.';
+                message += 'Tài liệu có thể bị hỏng. Kiểm tra mẫu và dữ liệu.';
             }
             
             alert(message);
         })
         .catch(error => {
-            alert(`Error testing document: ${error.message}`);
+            alert(`Lỗi khi kiểm tra tài liệu: ${error.message}`);
         });
 }
