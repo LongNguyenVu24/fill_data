@@ -67,14 +67,14 @@
             </section>
 
             <section class="generate-section">
-                <button id="generate-btn" class="primary-btn" disabled>Generate Document</button>
+                <button id="generate-btn" class="primary-btn" disabled>Generate Documents for All Rows</button>
                 <button id="debug-btn" class="secondary-btn" style="margin-left: 10px;">Show Debug Info</button>
                 <div id="debug-area" style="display: none; margin-top: 15px;">
                     <h3>Debug Information</h3>
                     <pre id="debug-content"></pre>
                 </div>
                 <div id="download-area" style="display: none;">
-                    <h3>Your document is ready!</h3>
+                    <h3>Your documents are ready!</h3>
                     <a id="download-link" class="download-btn">Download Document</a>
                 </div>
             </section>
@@ -89,6 +89,7 @@
     <script src="https://unpkg.com/pizzip/dist/pizzip.js"></script>
     <script src="https://unpkg.com/pizzip/dist/pizzip-utils.js"></script>
     <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+    <script src="https://unpkg.com/jszip@3/dist/jszip.min.js"></script>
     <script src="https://unpkg.com/file-saver/dist/FileSaver.min.js"></script>
     
     <!-- Load application scripts -->

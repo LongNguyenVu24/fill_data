@@ -390,6 +390,11 @@ function checkEnableMappingSection() {
         createMappingFields();
         document.getElementById('mapping-section').style.display = 'block';
         document.getElementById('generate-btn').disabled = false;
+        
+        // Update button text to show how many documents will be generated
+        const generateBtn = document.getElementById('generate-btn');
+        const rowCount = excelData ? excelData.length : 0;
+        generateBtn.textContent = `Generate ${rowCount} Documents (One per Row)`;
     }
 }
 
@@ -612,97 +617,24 @@ function generateDocument() {
         
         console.log('Mapping configuration:', mappingConfig);
         console.log('Number of mapped placeholders:', mappedCount);
+        console.log('Generating documents for', excelData.length, 'rows');
         
-        // Create a fresh PizZip instance from the template content
-        const zip = new PizZip(wordTemplateContent);
-        
-        // Get first row of data for single document generation
-        const dataRow = excelData[0];
-        const templateData = {};
-        
-        // Map Excel data to template placeholders
-        Object.keys(mappingConfig).forEach(placeholder => {
-            const excelColumn = mappingConfig[placeholder];
-            let value = dataRow[excelColumn];
-            
-            // Handle different data types
-            if (value === null || value === undefined) {
-                value = '';
-            } else if (typeof value === 'number') {
-                value = value.toString();
-            } else if (value instanceof Date) {
-                value = value.toLocaleDateString();
-            } else {
-                value = value.toString();
-            }
-            
-            templateData[placeholder] = value;
-        });
-        
-        console.log('Template data for filling:', templateData);
-        
-        // Create new instance of docxtemplater with error handling
-        let doc;
-        try {
-            doc = new docxtemplater(zip, {
-                paragraphLoop: true,
-                linebreaks: true,
-            });
-        } catch (zipError) {
-            console.error('Error creating docxtemplater instance:', zipError);
-            alert('Error reading the Word template. Please ensure it is a valid .docx file.');
-            return;
-        }
-        
-        // Set data for template
-        try {
-            doc.setData(templateData);
-        } catch (setDataError) {
-            console.error('Error setting template data:', setDataError);
-            alert('Error preparing template data. Please check your placeholders format.');
-            return;
-        }
-        
-        // Render document
-        try {
-            doc.render();
-        } catch (renderError) {
-            console.error('Error rendering document:', renderError);
-            if (renderError.properties && renderError.properties.errors) {
-                console.error('Render errors:', renderError.properties.errors);
-            }
-            alert('Error rendering the document. Please check that your Word template placeholders are correctly formatted as {placeholder_name}.');
-            return;
-        }
-        
-        // Get output
-        let out;
-        try {
-            out = doc.getZip().generate({
-                type: 'blob',
-                mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            });
-        } catch (generateError) {
-            console.error('Error generating output:', generateError);
-            alert('Error generating the final document. Please try again.');
-            return;
-        }
-        
-        // Create download link
-        const downloadLink = document.getElementById('download-link');
-        downloadLink.href = URL.createObjectURL(out);
-        downloadLink.download = `filled_document_${new Date().toISOString().slice(0, 10)}.docx`;
-        
-        // Show download area
-        document.getElementById('download-area').style.display = 'block';
+        // Show progress
+        const downloadArea = document.getElementById('download-area');
+        downloadArea.style.display = 'block';
+        downloadArea.innerHTML = `
+            <h3>Generating ${excelData.length} documents...</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p id="progress-text">Starting...</p>
+        `;
         
         // Scroll to download area
-        document.getElementById('download-area').scrollIntoView({
-            behavior: 'smooth'
-        });
+        downloadArea.scrollIntoView({ behavior: 'smooth' });
         
-        // Show success message
-        console.log('Document generated successfully!');
+        // Generate documents for each row
+        generateMultipleDocuments(mappingConfig);
         
     } catch (error) {
         console.error('Unexpected error generating document:', error);
@@ -725,6 +657,251 @@ function generateDocument() {
         }
         
         alert(errorMessage);
+    }
+}
+
+/**
+ * Generate multiple documents - one for each Excel row
+ */
+async function generateMultipleDocuments(mappingConfig) {
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const downloadArea = document.getElementById('download-area');
+    
+    const generatedFiles = [];
+    const totalRows = excelData.length;
+    
+    try {
+        // Process each row
+        for (let i = 0; i < totalRows; i++) {
+            const dataRow = excelData[i];
+            
+            // Update progress
+            const progress = ((i + 1) / totalRows) * 100;
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `Processing row ${i + 1} of ${totalRows}...`;
+            
+            // Allow UI to update
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            try {
+                // Create a completely fresh copy of the template content
+                const templateCopy = wordTemplateContent.slice(0);
+                
+                // Create a fresh PizZip instance from the template copy
+                const zip = new PizZip(templateCopy);
+                
+                // Prepare template data for this row
+                const templateData = {};
+                
+                // Map Excel data to template placeholders
+                Object.keys(mappingConfig).forEach(placeholder => {
+                    const excelColumn = mappingConfig[placeholder];
+                    let value = dataRow[excelColumn];
+                    
+                    // Handle different data types
+                    if (value === null || value === undefined) {
+                        value = '';
+                    } else if (typeof value === 'number') {
+                        value = value.toString();
+                    } else if (value instanceof Date) {
+                        value = value.toLocaleDateString();
+                    } else {
+                        value = value.toString();
+                    }
+                    
+                    templateData[placeholder] = value;
+                });
+                
+                console.log(`Row ${i + 1} template data:`, templateData);
+                
+                // Create new instance of docxtemplater with fresh zip
+                const doc = new docxtemplater(zip, {
+                    paragraphLoop: true,
+                    linebreaks: true,
+                    nullGetter: function(part) {
+                        // Return empty string for null/undefined values
+                        return '';
+                    },
+                    errorLogging: true
+                });
+                
+                // Set data for template
+                doc.setData(templateData);
+                
+                // Render document
+                doc.render();
+                
+                // Get the generated ZIP
+                const generatedZip = doc.getZip();
+                
+                // Generate blob with proper settings
+                const out = generatedZip.generate({
+                    type: 'blob',
+                    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    compression: 'DEFLATE',
+                    compressionOptions: {
+                        level: 6
+                    }
+                });
+                
+                // Verify the blob is valid
+                if (!out || out.size === 0) {
+                    throw new Error('Generated document is empty');
+                }
+                
+                // Create filename based on row data or index
+                let filename = `document_${i + 1}`;
+                
+                // Try to use a meaningful name if available
+                const nameColumns = ['name', 'Name', 'Họ và tên', 'Họ và tên ', 'STT'];
+                for (const col of nameColumns) {
+                    if (dataRow[col]) {
+                        const nameValue = dataRow[col].toString().trim();
+                        if (nameValue) {
+                            // Clean filename (remove invalid characters)
+                            filename = nameValue.replace(/[<>:"/\\|?*]/g, '_');
+                            break;
+                        }
+                    }
+                }
+                
+                filename += `_${new Date().toISOString().slice(0, 10)}.docx`;
+                
+                // Store file info
+                generatedFiles.push({
+                    blob: out,
+                    filename: filename,
+                    rowIndex: i + 1,
+                    rowData: templateData
+                });
+                
+                console.log(`Successfully generated document ${i + 1}/${totalRows}: ${filename}`);
+                
+            } catch (rowError) {
+                console.error(`Error generating document for row ${i + 1}:`, rowError);
+                generatedFiles.push({
+                    error: rowError.message,
+                    rowIndex: i + 1,
+                    filename: `error_row_${i + 1}.txt`
+                });
+            }
+        }
+        
+        // Update progress to complete
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Generation complete!';
+        
+        // Display download links
+        displayDownloadLinks(generatedFiles);
+        
+    } catch (error) {
+        console.error('Error in batch generation:', error);
+        downloadArea.innerHTML = `
+            <h3>Error generating documents</h3>
+            <p>An error occurred during batch generation: ${error.message}</p>
+        `;
+    }
+}
+
+/**
+ * Display download links for all generated documents
+ */
+function displayDownloadLinks(generatedFiles) {
+    const downloadArea = document.getElementById('download-area');
+    
+    const successfulFiles = generatedFiles.filter(file => !file.error);
+    const errorFiles = generatedFiles.filter(file => file.error);
+    
+    let html = `
+        <h3>Generated ${successfulFiles.length} documents successfully!</h3>
+    `;
+    
+    if (successfulFiles.length > 1) {
+        html += `
+            <div class="download-all-section">
+                <button id="download-all-btn" class="download-btn">Download All as ZIP</button>
+            </div>
+            <hr>
+        `;
+    }
+    
+    html += `<div class="individual-downloads">`;
+    
+    successfulFiles.forEach((file, index) => {
+        const url = URL.createObjectURL(file.blob);
+        html += `
+            <div class="download-item">
+                <span class="file-info">Row ${file.rowIndex}: ${file.filename}</span>
+                <div class="download-actions">
+                    <a href="${url}" download="${file.filename}" class="download-link-small">Download</a>
+                    <button onclick="testDocumentOpen('${url}', '${file.filename}')" class="test-btn" title="Test if document opens correctly">Test</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    
+    if (errorFiles.length > 0) {
+        html += `
+            <div class="error-section">
+                <h4>Errors (${errorFiles.length} files):</h4>
+        `;
+        
+        errorFiles.forEach(file => {
+            html += `
+                <div class="error-item">
+                    Row ${file.rowIndex}: ${file.error}
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+    }
+    
+    downloadArea.innerHTML = html;
+    
+    // Add event listener for download all button
+    if (successfulFiles.length > 1) {
+        document.getElementById('download-all-btn').addEventListener('click', () => {
+            downloadAllAsZip(successfulFiles);
+        });
+    }
+}
+
+/**
+ * Download all files as a ZIP archive
+ */
+async function downloadAllAsZip(files) {
+    try {
+        // Create a new ZIP file using JSZip
+        const zip = new JSZip();
+        
+        files.forEach(file => {
+            zip.file(file.filename, file.blob);
+        });
+        
+        // Generate the ZIP file
+        const zipBlob = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 6 }
+        });
+        
+        // Create download link
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `generated_documents_${new Date().toISOString().slice(0, 10)}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('Error creating ZIP file:', error);
+        alert('Error creating ZIP file. Please download files individually.');
     }
 }
 
@@ -874,4 +1051,39 @@ function showDebugInfo() {
     
     debugContent.textContent = debugInfo;
     debugArea.style.display = debugArea.style.display === 'none' ? 'block' : 'none';
+}
+
+/**
+ * Test if a document can be opened (basic validation)
+ */
+function testDocumentOpen(url, filename) {
+    // Try to create a temporary link and test
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    
+    // Simple test - just try to download and show info
+    fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            const isValidSize = blob.size > 1000; // At least 1KB
+            const hasCorrectType = blob.type.includes('wordprocessingml') || blob.type.includes('document');
+            
+            let message = `File: ${filename}\n`;
+            message += `Size: ${(blob.size / 1024).toFixed(1)} KB\n`;
+            message += `Type: ${blob.type}\n`;
+            message += `Valid size: ${isValidSize ? '✓' : '✗'}\n`;
+            message += `Correct type: ${hasCorrectType ? '✓' : '✗'}\n\n`;
+            
+            if (isValidSize && hasCorrectType) {
+                message += 'Document appears to be valid. Try opening it!';
+            } else {
+                message += 'Document may be corrupted. Check the template and data.';
+            }
+            
+            alert(message);
+        })
+        .catch(error => {
+            alert(`Error testing document: ${error.message}`);
+        });
 }

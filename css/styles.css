@@ -351,6 +351,124 @@ table tr:nth-child(even) {
     margin-top: 20px;
 }
 
+/* Progress Bar Styles */
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 15px 0;
+    border: 1px solid var(--border-color);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px 0 0 10px;
+}
+
+/* Download Links Styles */
+.download-all-section {
+    margin: 20px 0;
+}
+
+.individual-downloads {
+    text-align: left;
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.download-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.download-item:last-child {
+    border-bottom: none;
+}
+
+.file-info {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--dark-color);
+}
+
+.download-link-small {
+    padding: 5px 15px;
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    transition: background-color 0.3s ease;
+}
+
+.download-link-small:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Error Section */
+.error-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.error-section h4 {
+    color: #721c24;
+    margin-bottom: 10px;
+}
+
+.error-item {
+    padding: 5px 0;
+    font-size: 0.9rem;
+    color: #721c24;
+    border-bottom: 1px solid #f5c6cb;
+}
+
+.error-item:last-child {
+    border-bottom: none;
+}
+
+/* Download Actions */
+.download-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.test-btn {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.3s;
+}
+
+.test-btn:hover {
+    background-color: #138496;
+}
+
+.test-btn:active {
+    transform: translateY(1px);
+}
+
 /* Footer Styles */
 footer {
     text-align: center;
