@@ -493,3 +493,107 @@ footer {
         width: 100%;
     }
 }
+
+/* Templates list styling */
+.templates-list {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.templates-list h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+}
+
+.templates-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.templates-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.template-name {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.template-placeholders {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.preview-template-btn {
+    padding: 4px 12px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.3s ease;
+}
+
+.preview-template-btn:hover {
+    background-color: #3498db;
+}
+
+/* Template selector in Excel table */
+.template-selector {
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 3px;
+    background-color: white;
+    font-size: 0.85rem;
+    min-width: 120px;
+}
+
+/* Excel table styling improvements */
+.excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.9rem;
+}
+
+.excel-table th,
+.excel-table td {
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    text-align: left;
+    vertical-align: top;
+}
+
+.excel-table th {
+    background-color: var(--light-color);
+    font-weight: 600;
+    color: var(--dark-color);
+    position: sticky;
+    top: 0;
+}
+
+.excel-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.excel-table tbody tr:hover {
+    background-color: #e3f2fd;
+}
+
+.preview-info {
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 10px;
+}

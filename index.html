@@ -25,12 +25,17 @@
                     </div>
 
                     <div class="upload-box">
-                        <label for="word-template">Select Word Template:</label>
-                        <input type="file" id="word-template" accept=".docx">
-                        <div class="file-info" id="word-template-info">No file selected</div>
+                        <label for="word-templates">Select Word Templates:</label>
+                        <input type="file" id="word-templates" accept=".docx" multiple>
+                        <div class="file-info" id="word-templates-info">No files selected</div>
                         <div class="file-format-info">
                             <strong>Important:</strong> Only .docx files are supported (newer Word format). 
                             If you have a .doc file, please open it in Word and save as .docx format.
+                            <br><strong>Multi-upload:</strong> You can select multiple templates at once by holding Ctrl (Windows) or Cmd (Mac) while clicking files.
+                        </div>
+                        <div class="templates-list" id="templates-list" style="display: none;">
+                            <h4>Uploaded Templates:</h4>
+                            <ul id="templates-list-items"></ul>
                         </div>
                     </div>
                 </div>
