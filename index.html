@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel to Word Document Filler</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Excel to Word Document Filler</h1>
+            <p>Upload Excel data and a Word template to generate filled documents</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="file-upload">
+                    <h2>Step 1: Upload Files</h2>
+                    
+                    <div class="upload-box">
+                        <label for="excel-file">Select Excel File:</label>
+                        <input type="file" id="excel-file" accept=".xlsx,.xls">
+                        <div class="file-info" id="excel-file-info">No file selected</div>
+                    </div>
+
+                    <div class="upload-box">
+                        <label for="word-template">Select Word Template:</label>
+                        <input type="file" id="word-template" accept=".docx">
+                        <div class="file-info" id="word-template-info">No file selected</div>
+                        <div class="file-format-info">
+                            <strong>Important:</strong> Only .docx files are supported (newer Word format). 
+                            If you have a .doc file, please open it in Word and save as .docx format.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="mapping-section" id="mapping-section" style="display: none;">
+                <h2>Step 2: Map Excel Columns to Word Placeholders</h2>
+                <p>Select which Excel columns should be used for each placeholder in your Word template.</p>
+                
+                <div class="mapping-container" id="mapping-container">
+                    <!-- Mapping fields will be generated here -->
+                </div>
+                
+                <div class="placeholder-info">
+                    <h3>Template Placeholders Format</h3>
+                    <p>Your Word document should contain placeholders in the format: <code>{placeholder_name}</code></p>
+                </div>
+            </section>
+
+            <section class="preview-section" id="preview-section" style="display: none;">
+                <h2>Step 3: Preview Files Content</h2>
+                <div class="excel-preview">
+                    <h3>📊 Excel Data Preview</h3>
+                    <p>Review your Excel data below. You can adjust the number of rows displayed.</p>
+                    <div class="table-container" id="excel-preview"></div>
+                </div>
+                
+                <div class="word-preview" id="word-preview-section" style="display: none;">
+                    <h3>📄 Word Template Preview</h3>
+                    <p>This is the actual content of your Word document. Placeholders that will be filled with data are highlighted in <span class="placeholder-highlight-example">yellow</span>.</p>
+                    <p>💡 Click on any highlighted placeholder to jump to its mapping field.</p>
+                    <div class="word-content" id="word-preview-content"></div>
+                </div>
+            </section>
+
+            <section class="generate-section">
+                <button id="generate-btn" class="primary-btn" disabled>Generate Document</button>
+                <button id="debug-btn" class="secondary-btn" style="margin-left: 10px;">Show Debug Info</button>
+                <div id="debug-area" style="display: none; margin-top: 15px;">
+                    <h3>Debug Information</h3>
+                    <pre id="debug-content"></pre>
+                </div>
+                <div id="download-area" style="display: none;">
+                    <h3>Your document is ready!</h3>
+                    <a id="download-link" class="download-btn">Download Document</a>
+                </div>
+            </section>
+        </main>
+
+        
+    </div>
+
+    <!-- Load libraries -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/docxtemplater/build/docxtemplater.js"></script>
+    <script src="https://unpkg.com/pizzip/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/pizzip/dist/pizzip-utils.js"></script>
+    <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+    <script src="https://unpkg.com/file-saver/dist/FileSaver.min.js"></script>
+    
+    <!-- Load application scripts -->
+    <script src="js/app.js"></script>
+</body>
+</html>
