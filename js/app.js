@@ -7,16 +7,71 @@ let templateName = ''; // Store template name for filename prefix
 
 // Document ready function
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize event listeners
-    document.getElementById('excel-file').addEventListener('change', handleExcelUpload);
-    document.getElementById('word-template').addEventListener('change', handleWordTemplateUpload);
-    document.getElementById('generate-btn').addEventListener('click', generateDocument);
-    document.getElementById('debug-btn').addEventListener('click', showDebugInfo);
-    
-    // Improved file upload/remove logic
-    setFileInfo('excel-file', 'excel-file-info', 'remove-excel-file');
-    setFileInfo('word-template', 'word-template-info', 'remove-word-file');
+    // Initialize notification system first
+    setTimeout(() => {
+        // Ensure notifications are ready before setting up other handlers
+        if (typeof notifications !== 'undefined') {
+            console.log('Notifications system ready');
+        }
+        
+        // Initialize event listeners
+        document.getElementById('excel-file').addEventListener('change', handleExcelUpload);
+        document.getElementById('word-template').addEventListener('change', handleWordTemplateUpload);
+        document.getElementById('generate-btn').addEventListener('click', generateDocument);
+        document.getElementById('debug-btn').addEventListener('click', showDebugInfo);
+        
+        // Improved file upload/remove logic
+        setFileInfo('excel-file', 'excel-file-info', 'remove-excel-file');
+        setFileInfo('word-template', 'word-template-info', 'remove-word-file');
+    }, 100);
 });
+
+function showSuccessNotification(message, title = 'Thành công!') {
+    return notifications.success(message, title);
+}
+
+function showErrorNotification(message, title = 'Lỗi!') {
+    return notifications.error(message, title);
+}
+
+function showWarningNotification(message, title = 'Cảnh báo!') {
+    return notifications.warning(message, title);
+}
+
+function showInfoNotification(message, title = 'Thông tin') {
+    return notifications.info(message, title);
+}
+
+function showProgressNotification(message, title = 'Đang xử lý...') {
+    return notifications.progress(message, title);
+}
+
+// Enhanced smooth transitions for sections
+function showSectionWithAnimation(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.style.display = 'block';
+        element.style.transform = 'translateY(20px)';
+        element.style.opacity = '0';
+        
+        setTimeout(() => {
+            element.style.transform = 'translateY(0)';
+            element.style.opacity = '1';
+        }, 10);
+    }
+}
+
+function hideSectionWithAnimation(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.style.transform = 'translateY(-20px)';
+        element.style.opacity = '0';
+        
+        setTimeout(() => {
+            element.style.display = 'none';
+        }, 300);
+    }
+}
 
 /**
  * Handle Excel file upload
@@ -25,15 +80,18 @@ function handleExcelUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Update file info display
-    document.getElementById('excel-file-info').textContent = `Đã chọn: ${file.name}`;
-    
-    // Read the Excel file
+    const progressId = showProgressNotification('Đang đọc tệp Excel...', 'Xử lý tệp Excel');
+    notifications.updateProgress(progressId, 25);
+
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
+            notifications.updateProgress(progressId, 50);
+            
             const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
+            
+            notifications.updateProgress(progressId, 75);
             
             // Get first sheet
             const firstSheetName = workbook.SheetNames[0];
@@ -46,11 +104,21 @@ function handleExcelUpload(event) {
             if (excelData.length > 0) {
                 excelHeaders = Object.keys(excelData[0]);
                 
+                notifications.updateProgress(progressId, 100);
+                
                 // Display preview
                 displayExcelPreview(excelData);
                 
                 // Show preview section
                 document.getElementById('preview-section').style.display = 'block';
+
+                // Show preview section
+                showSectionWithAnimation('preview-section');
+                
+                showSuccessNotification(
+                    `Tệp Excel "${file.name}" đã được tải lên thành công!\nĐã đọc ${excelData.length} hàng dữ liệu với ${excelHeaders.length} cột.`,
+                    'Tải lên thành công!'
+                );
             }
             
             // Check if we can enable mapping
@@ -60,7 +128,11 @@ function handleExcelUpload(event) {
             updateDebugInfoIfVisible();
         } catch (error) {
             console.error('Error processing Excel file:', error);
-            alert('Lỗi khi xử lý tệp Excel. Vui lòng kiểm tra định dạng và thử lại.');
+            notifications.hide(progressId);
+            showErrorNotification(
+                `Lỗi khi xử lý tệp Excel: ${error.message}\n\nVui lòng kiểm tra định dạng tệp và thử lại.`,
+                'Lỗi xử lý Excel'
+            );
             
             // Auto-update debug info if it's visible
             updateDebugInfoIfVisible();
@@ -80,9 +152,15 @@ function handleWordTemplateUpload(event) {
     // Check file extension
     const fileName = file.name.toLowerCase();
     if (!fileName.endsWith('.docx')) {
-        alert('Vui lòng tải lên tệp .docx (định dạng Word mới). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.');
-        event.target.value = ''; // Clear the file input
-        document.getElementById('word-template-info').textContent = 'Chưa chọn tệp tin';
+        showWarningNotification(
+            `Tệp .doc không được hỗ trợ trực tiếp.\n\nCÁCH CHUYỂN ĐỔI NHANH:\n1. Mở "${file.name}" trong Microsoft Word\n2. Nhấn Ctrl+Shift+S hoặc File → Save As\n3. Trong "Save as type", chọn "Word Document (*.docx)"\n4. Nhấn Save và tải lên tệp .docx mới`,
+            'Định dạng tệp không hỗ trợ'
+        );
+        event.target.value = '';
+        document.getElementById('word-template-info').innerHTML = `
+            Chưa chọn tệp tin
+            <button class="remove-file-btn" id="remove-word-file" style="display:none;" title="Xóa tệp">×</button>
+        `;
         templateName = ''; // Clear template name
         
         // Auto-update debug info if it's visible
@@ -90,18 +168,25 @@ function handleWordTemplateUpload(event) {
         return;
     }
 
+    // Show progress notification
+    const progressId = showProgressNotification('Đang đọc và phân tích tệp Word...', 'Xử lý tệp Word');
+    notifications.updateProgress(progressId, 25);
+
     // Update file info display
-    document.getElementById('word-template-info').textContent = `Đã chọn: ${file.name}`;
+    document.getElementById('word-template-info').textContent = `${file.name}`;
     
-    // Store template name for filename prefix (remove extension and clean for filename)
+    // Store template name for filename prefix
     templateName = file.name.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
     
-    // Read the Word template file
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
+            notifications.updateProgress(progressId, 50);
+            
             const arrayBuffer = e.target.result;
             wordTemplateContent = arrayBuffer;
+            
+            notifications.updateProgress(progressId, 75);
             
             // Extract placeholders from template
             extractPlaceholders(arrayBuffer);
@@ -109,28 +194,43 @@ function handleWordTemplateUpload(event) {
             // Extract actual document content for preview
             extractActualWordContent(arrayBuffer);
             
+            notifications.updateProgress(progressId, 100);
+            
             // Make sure the preview section is visible
-            document.getElementById('preview-section').style.display = 'block';
-            document.getElementById('word-preview-section').style.display = 'block';
+            showSectionWithAnimation('word-preview-section');
             
             // Check if we can enable mapping
             checkEnableMappingSection();
             
+            // KHÔNG GỌI showSuccessNotification ở đây nữa
+            console.log(`Word template "${file.name}" loaded successfully with ${wordPlaceholders.length} placeholders`);
+            
             // Auto-update debug info if it's visible
             updateDebugInfoIfVisible();
+            
         } catch (error) {
             console.error('Error processing Word template:', error);
+            notifications.hide(progressId);
             
             // Provide specific error message for format issues
             if (error.message && error.message.includes('zip')) {
-                alert('Tệp tải lên không phải định dạng .docx hợp lệ. Vui lòng đảm bảo bạn đang tải lên tệp .docx (không phải .doc). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.');
+                showErrorNotification(
+                    'Tệp tải lên không phải định dạng .docx hợp lệ.\n\nVui lòng đảm bảo bạn đang tải lên tệp .docx (không phải .doc). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.',
+                    'Tệp không hợp lệ'
+                );
             } else {
-                alert('Lỗi khi xử lý mẫu Word. Vui lòng kiểm tra định dạng và thử lại.');
+                showErrorNotification(
+                    'Lỗi khi xử lý mẫu Word.\n\nVui lòng kiểm tra định dạng và thử lại.',
+                    'Lỗi xử lý tệp'
+                );
             }
             
             // Clear the file input
             event.target.value = '';
-            document.getElementById('word-template-info').textContent = 'Chưa chọn tệp tin';
+            document.getElementById('word-template-info').innerHTML = `
+                Chưa chọn tệp tin
+                <button class="remove-file-btn" id="remove-word-file" style="display:none;" title="Xóa tệp">×</button>
+            `;
             templateName = ''; // Clear template name
             
             // Auto-update debug info if it's visible
@@ -635,12 +735,18 @@ function generateDocument() {
     try {
         // Check if we have required data
         if (!excelData || !wordTemplateContent || excelData.length === 0) {
-            alert('Vui lòng tải lên cả dữ liệu Excel và mẫu Word trước khi tạo tài liệu.');
+            showErrorNotification(
+                'Vui lòng tải lên cả dữ liệu Excel và mẫu Word trước khi tạo tài liệu.',
+                'Thiếu dữ liệu'
+            );
             return;
         }
         
         if (!wordPlaceholders || wordPlaceholders.length === 0) {
-            alert('Không tìm thấy placeholder trong mẫu Word. Vui lòng đảm bảo mẫu của bạn chứa placeholder theo định dạng {tên_placeholder}.');
+            showWarningNotification(
+                'Không tìm thấy placeholder trong mẫu Word.\n\nVui lòng đảm bảo mẫu của bạn chứa placeholder theo định dạng {tên_placeholder}.',
+                'Không có placeholder'
+            );
             return;
         }
         
@@ -657,7 +763,10 @@ function generateDocument() {
         });
         
         if (mappedCount === 0) {
-            alert('Vui lòng ánh xạ ít nhất một cột Excel với một placeholder trong Word trước khi tạo tài liệu.');
+            showWarningNotification(
+                'Vui lòng ánh xạ ít nhất một cột Excel với một placeholder trong Word trước khi tạo tài liệu.',
+                'Chưa có ánh xạ'
+            );
             return;
         }
         
@@ -690,14 +799,18 @@ function generateDocument() {
         
         // Provide more specific error message based on the error type
         let errorMessage = 'Lỗi khi tạo tài liệu. ';
+        let errorTitle = 'Lỗi tạo tài liệu';
         
         if (error.message) {
             if (error.message.includes('corrupted')) {
                 errorMessage += 'Mẫu Word có vẻ bị hỏng. Vui lòng thử tệp khác.';
+                errorTitle = 'Mẫu bị hỏng';
             } else if (error.message.includes('placeholder') || error.message.includes('template')) {
                 errorMessage += 'Có vẻ có vấn đề với placeholder trong mẫu của bạn. Vui lòng đảm bảo chúng được định dạng như {tên_placeholder}.';
+                errorTitle = 'Lỗi placeholder';
             } else if (error.message.includes('zip') || error.message.includes('archive')) {
                 errorMessage += 'Không thể xử lý mẫu Word. Vui lòng đảm bảo đó là tệp .docx hợp lệ.';
+                errorTitle = 'Tệp không hợp lệ';
             } else {
                 errorMessage += 'Vui lòng kiểm tra ánh xạ và thử lại. Lỗi: ' + error.message;
             }
@@ -705,7 +818,7 @@ function generateDocument() {
             errorMessage += 'Vui lòng kiểm tra ánh xạ và thử lại.';
         }
         
-        alert(errorMessage);
+        showErrorNotification(errorMessage, errorTitle);
         
         // Auto-update debug info if it's visible
         updateDebugInfoIfVisible();
@@ -855,6 +968,14 @@ async function generateMultipleDocuments(mappingConfig) {
         // Display download links
         displayDownloadLinks(generatedFiles);
         
+        const successfulFiles = generatedFiles.filter(file => !file.error);
+        if (successfulFiles.length > 0) {
+            showSuccessNotification(
+                `Đã tạo thành công ${successfulFiles.length}/${totalRows} tài liệu!`,
+                'Hoàn thành!'
+            );
+        }
+        
         // Auto-update debug info if it's visible
         updateDebugInfoIfVisible();
         
@@ -864,6 +985,11 @@ async function generateMultipleDocuments(mappingConfig) {
             <h3>Lỗi khi tạo tài liệu</h3>
             <p>Đã xảy ra lỗi trong quá trình tạo hàng loạt: ${error.message}</p>
         `;
+        
+        showErrorNotification(
+            `Đã xảy ra lỗi trong quá trình tạo hàng loạt: ${error.message}`,
+            'Lỗi tạo hàng loạt'
+        );
         
         // Auto-update debug info if it's visible
         updateDebugInfoIfVisible();
@@ -941,12 +1067,19 @@ function displayDownloadLinks(generatedFiles) {
  */
 async function downloadAllAsZip(files) {
     try {
+        const progressId = showProgressNotification('Đang nén tất cả tệp thành ZIP...', 'Tạo tệp ZIP');
+        notifications.updateProgress(progressId, 25);
+        
         // Create a new ZIP file using JSZip
         const zip = new JSZip();
+        
+        notifications.updateProgress(progressId, 50);
         
         files.forEach(file => {
             zip.file(file.filename, file.blob);
         });
+        
+        notifications.updateProgress(progressId, 75);
         
         // Generate the ZIP file
         const zipBlob = await zip.generateAsync({
@@ -954,6 +1087,8 @@ async function downloadAllAsZip(files) {
             compression: 'DEFLATE',
             compressionOptions: { level: 6 }
         });
+        
+        notifications.updateProgress(progressId, 100);
         
         // Create download link
         const url = URL.createObjectURL(zipBlob);
@@ -965,9 +1100,17 @@ async function downloadAllAsZip(files) {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        showSuccessNotification(
+            `Đã tạo và tải xuống tệp ZIP chứa ${files.length} tài liệu thành công!`,
+            'Tải xuống hoàn tất!'
+        );
+        
     } catch (error) {
         console.error('Error creating ZIP file:', error);
-        alert('Lỗi khi tạo tệp ZIP. Vui lòng tải xuống từng tệp riêng lẻ.');
+        showErrorNotification(
+            'Lỗi khi tạo tệp ZIP. Vui lòng tải xuống từng tệp riêng lẻ.',
+            'Lỗi tạo ZIP'
+        );
     }
 }
 
@@ -1157,14 +1300,17 @@ function testDocumentOpen(url, filename) {
             
             if (isValidSize && hasCorrectType) {
                 message += 'Tài liệu có vẻ hợp lệ. Thử mở nó!';
+                showSuccessNotification(message, 'Kiểm tra tệp');
             } else {
                 message += 'Tài liệu có thể bị hỏng. Kiểm tra mẫu và dữ liệu.';
+                showWarningNotification(message, 'Cảnh báo tệp');
             }
-            
-            alert(message);
         })
         .catch(error => {
-            alert(`Lỗi khi kiểm tra tài liệu: ${error.message}`);
+            showErrorNotification(
+                `Lỗi khi kiểm tra tài liệu: ${error.message}`,
+                'Lỗi kiểm tra'
+            );
         });
 }
 
@@ -1173,12 +1319,13 @@ function setFileInfo(inputId, infoId, btnId) {
     const input = document.getElementById(inputId);
     const info = document.getElementById(infoId);
 
-    input.addEventListener('change', function () {
+    input.addEventListener('change', function (event) {
         if (this.files.length) {
             info.innerHTML = `
                 ${this.files[0].name}
                 <button class="remove-file-btn" id="${btnId}" title="Xóa tệp">×</button>
             `;
+            
             // Re-attach remove event after replacing innerHTML
             document.getElementById(btnId).onclick = function () {
                 input.value = '';
@@ -1186,6 +1333,8 @@ function setFileInfo(inputId, infoId, btnId) {
                     Chưa chọn tệp tin
                     <button class="remove-file-btn" id="${btnId}" style="display:none;" title="Xóa tệp">×</button>
                 `;
+                
+                // Clear data when file is removed
                 if (inputId === 'excel-file') {
                     excelData = null;
                     excelHeaders = [];
@@ -1201,25 +1350,19 @@ function setFileInfo(inputId, infoId, btnId) {
                     }
                     document.getElementById('word-preview-section').style.display = 'none';
                 }
+                
                 updateSectionsVisibility();
                 updateDebugInfoIfVisible();
             };
-
-            // Process new file upload after removal
-            if (inputId === 'excel-file' && this.files[0]) {
-                handleExcelUpload({ target: input });
-            }
             
-            if (inputId === 'word-template' && this.files[0]) {
-                handleWordTemplateUpload({ target: input });
-            }
-            
+            // KHÔNG GỌI LẠI upload handlers ở đây
             updateSectionsVisibility();
         } else {
             info.innerHTML = `
                 Chưa chọn tệp tin
                 <button class="remove-file-btn" id="${btnId}" style="display:none;" title="Xóa tệp">×</button>
             `;
+            
             if (inputId === 'excel-file') {
                 document.getElementById('excel-preview').innerHTML = '';
             }
