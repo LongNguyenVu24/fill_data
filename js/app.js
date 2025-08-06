@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('generate-btn').addEventListener('click', generateDocument);
         document.getElementById('debug-btn').addEventListener('click', showDebugInfo);
         
+        // Add keyboard shortcut for debug toggle (Ctrl+Shift+Space)
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.shiftKey && event.code === 'Space') {
+                event.preventDefault(); // Prevent default browser behavior
+                showDebugInfo(); // Toggle debug info
+            }
+        });
+        
         // Improved file upload/remove logic
         setFileInfo('excel-file', 'excel-file-info', 'remove-excel-file');
         setFileInfo('word-template', 'word-template-info', 'remove-word-file');
