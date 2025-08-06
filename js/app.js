@@ -1006,7 +1006,6 @@ function displayDownloadLinks(generatedFiles) {
     const errorFiles = generatedFiles.filter(file => file.error);
     
     let html = `
-        <h3>Đã tạo thành công ${successfulFiles.length} tài liệu!</h3>
     `;
     
     if (successfulFiles.length > 1) {
