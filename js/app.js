@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('word-template').addEventListener('change', handleWordTemplateUpload);
     document.getElementById('generate-btn').addEventListener('click', generateDocument);
     document.getElementById('debug-btn').addEventListener('click', showDebugInfo);
+    
+    // Improved file upload/remove logic
+    setFileInfo('excel-file', 'excel-file-info', 'remove-excel-file');
+    setFileInfo('word-template', 'word-template-info', 'remove-word-file');
 });
 
 /**
@@ -415,7 +419,7 @@ function checkEnableMappingSection() {
         // Update button text to show how many documents will be generated
         const generateBtn = document.getElementById('generate-btn');
         const rowCount = excelData ? excelData.length : 0;
-        generateBtn.textContent = `Tạo ${rowCount} tài liệu (Một cho mỗi hàng)`;
+        generateBtn.textContent = `Tạo ${rowCount} bản tài liệu`;
         
         // Auto-update debug info if it's visible
         updateDebugInfoIfVisible();
@@ -1162,4 +1166,99 @@ function testDocumentOpen(url, filename) {
         .catch(error => {
             alert(`Lỗi khi kiểm tra tài liệu: ${error.message}`);
         });
+}
+
+// Improved file upload/remove logic
+function setFileInfo(inputId, infoId, btnId) {
+    const input = document.getElementById(inputId);
+    const info = document.getElementById(infoId);
+
+    input.addEventListener('change', function () {
+        if (this.files.length) {
+            info.innerHTML = `
+                ${this.files[0].name}
+                <button class="remove-file-btn" id="${btnId}" title="Xóa tệp">×</button>
+            `;
+            // Re-attach remove event after replacing innerHTML
+            document.getElementById(btnId).onclick = function () {
+                input.value = '';
+                info.innerHTML = `
+                    Chưa chọn tệp tin
+                    <button class="remove-file-btn" id="${btnId}" style="display:none;" title="Xóa tệp">×</button>
+                `;
+                if (inputId === 'excel-file') {
+                    excelData = null;
+                    excelHeaders = [];
+                    document.getElementById('excel-preview').innerHTML = '';
+                }
+                if (inputId === 'word-template') {
+                    wordTemplateContent = null;
+                    wordPlaceholders = [];
+                    templateName = '';
+                    const wordPreviewContent = document.getElementById('word-preview-content');
+                    if (wordPreviewContent) {
+                        wordPreviewContent.innerHTML = '';
+                    }
+                    document.getElementById('word-preview-section').style.display = 'none';
+                }
+                updateSectionsVisibility();
+                updateDebugInfoIfVisible();
+            };
+
+            // Process new file upload after removal
+            if (inputId === 'excel-file' && this.files[0]) {
+                handleExcelUpload({ target: input });
+            }
+            
+            if (inputId === 'word-template' && this.files[0]) {
+                handleWordTemplateUpload({ target: input });
+            }
+            
+            updateSectionsVisibility();
+        } else {
+            info.innerHTML = `
+                Chưa chọn tệp tin
+                <button class="remove-file-btn" id="${btnId}" style="display:none;" title="Xóa tệp">×</button>
+            `;
+            if (inputId === 'excel-file') {
+                document.getElementById('excel-preview').innerHTML = '';
+            }
+            if (inputId === 'word-template') {
+                const wordPreviewContent = document.getElementById('word-preview-content');
+                if (wordPreviewContent) {
+                    wordPreviewContent.innerHTML = '';
+                }
+                document.getElementById('word-preview-section').style.display = 'none';
+            }
+            updateSectionsVisibility();
+        }
+    });
+
+    // Initial state
+    info.innerHTML = `
+        Chưa chọn tệp tin
+        <button class="remove-file-btn" id="${btnId}" style="display:none;" title="Xóa tệp">×</button>
+    `;
+}
+
+// Add this helper function at the end of your file:
+function updateSectionsVisibility() {
+    const hasExcel = excelData && excelHeaders.length > 0;
+    const hasWord = wordTemplateContent && wordPlaceholders.length > 0;
+
+    // Preview section
+    if (hasExcel || hasWord) {
+        document.getElementById('preview-section').style.display = 'block';
+    } else {
+        document.getElementById('preview-section').style.display = 'none';
+    }
+
+    // Mapping section and generate button only if both files are present
+    if (hasExcel && hasWord) {
+        document.getElementById('mapping-section').style.display = 'block';
+        document.getElementById('generate-btn').disabled = false;
+    } else {
+        document.getElementById('mapping-section').style.display = 'none';
+        document.getElementById('generate-btn').disabled = true;
+    }
 }

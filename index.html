@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Excel to Word Document Filler</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -17,58 +19,70 @@
             <section class="upload-section">
                 <div class="file-upload">
                     <h2>Bước 1: Tải lên tệp tin</h2>
-                    
+
                     <div class="upload-box">
                         <label for="excel-file">Chọn tệp Excel:</label>
                         <input type="file" id="excel-file" accept=".xlsx,.xls">
-                        <div class="file-info" id="excel-file-info">Chưa chọn tệp tin</div>
+                        <div class="file-info" id="excel-file-info">
+                            Chưa chọn tệp tin
+                            <button class="remove-file-btn" id="remove-excel-file" style="display:none;"
+                                title="Xóa tệp">×</button>
+                        </div>
                     </div>
 
                     <div class="upload-box">
                         <label for="word-template">Chọn mẫu Word:</label>
                         <input type="file" id="word-template" accept=".docx">
-                        <div class="file-info" id="word-template-info">Chưa chọn tệp tin</div>
+                        <div class="file-info" id="word-template-info">
+                            Chưa chọn tệp tin
+                            <button class="remove-file-btn" id="remove-word-file" style="display:none;"
+                                title="Xóa tệp">×</button>
+                        </div>
                         <div class="file-format-info">
-                            <strong>Quan trọng:</strong> Chỉ hỗ trợ tệp .docx (định dạng Word mới). 
+                            <strong>Quan trọng:</strong> Chỉ hỗ trợ tệp .docx (định dạng Word mới).
                             Nếu bạn có tệp .doc, vui lòng mở trong Word và lưu dưới định dạng .docx.
                         </div>
                     </div>
                 </div>
             </section>
 
+            
+
+            <section class="preview-section" id="preview-section" style="display: none;">
+                <h2>Bước 2: Xem trước nội dung tệp tin</h2>
+                <div class="excel-preview">
+                    <h3>📊 Xem trước dữ liệu Excel</h3>
+                    <p>Xem lại dữ liệu Excel bên dưới. Bạn có thể điều chỉnh số hàng hiển thị.</p>
+                    <div class="table-container" id="excel-preview"></div>
+                </div>
+
+                <div class="word-preview" id="word-preview-section" style="display: none;">
+                    <h3>📄 Xem trước mẫu Word</h3>
+                    <p>Đây là nội dung thực tế của tài liệu Word. Các placeholder sẽ được điền dữ liệu được tô sáng màu
+                        <span class="placeholder-highlight-example">vàng</span>.</p>
+                    <p>💡 Nhấp vào bất kỳ placeholder được tô sáng nào để chuyển đến trường ánh xạ của nó.</p>
+                    <div class="word-content" id="word-preview-content"></div>
+                </div>
+            </section>
+
             <section class="mapping-section" id="mapping-section" style="display: none;">
-                <h2>Bước 2: Ánh xạ cột Excel với placeholder trong Word</h2>
+                <h2>Bước 3: Ánh xạ cột Excel với placeholder trong Word</h2>
                 <p>Chọn cột Excel nào sẽ được sử dụng cho mỗi placeholder trong mẫu Word của bạn.</p>
-                
+
                 <div class="mapping-container" id="mapping-container">
                     <!-- Mapping fields will be generated here -->
                 </div>
-                
+
                 <div class="placeholder-info">
                     <h3>Định dạng Placeholder trong mẫu</h3>
                     <p>Tài liệu Word của bạn nên chứa các placeholder theo định dạng: <code>{tên_placeholder}</code></p>
                 </div>
             </section>
 
-            <section class="preview-section" id="preview-section" style="display: none;">
-                <h2>Bước 3: Xem trước nội dung tệp tin</h2>
-                <div class="excel-preview">
-                    <h3>📊 Xem trước dữ liệu Excel</h3>
-                    <p>Xem lại dữ liệu Excel bên dưới. Bạn có thể điều chỉnh số hàng hiển thị.</p>
-                    <div class="table-container" id="excel-preview"></div>
-                </div>
-                
-                <div class="word-preview" id="word-preview-section" style="display: none;">
-                    <h3>📄 Xem trước mẫu Word</h3>
-                    <p>Đây là nội dung thực tế của tài liệu Word. Các placeholder sẽ được điền dữ liệu được tô sáng màu <span class="placeholder-highlight-example">vàng</span>.</p>
-                    <p>💡 Nhấp vào bất kỳ placeholder được tô sáng nào để chuyển đến trường ánh xạ của nó.</p>
-                    <div class="word-content" id="word-preview-content"></div>
-                </div>
-            </section>
-
             <section class="generate-section">
                 <button id="generate-btn" class="primary-btn" disabled>Tạo tài liệu cho tất cả hàng</button>
-                <button id="debug-btn" class="secondary-btn" style="margin-left: 10px;">Hiển thị thông tin Debug</button>
+                <button id="debug-btn" class="secondary-btn" style="margin-left: 10px;">Hiển thị thông tin
+                    Debug</button>
                 <div id="debug-area" style="display: none; margin-top: 15px;">
                     <h3>Thông tin Debug</h3>
                     <pre id="debug-content"></pre>
@@ -83,7 +97,9 @@
         <footer>
             <div class="footer-content">
                 <p>© 2025 - Được phát triển bởi <strong>LongNguyenVu24</strong></p>
-                <p>📞 Liên hệ: <a href="tel:0854785566" style="color: inherit; text-decoration: none;"><strong>08 54 78 55 66</strong></a> | 📧 Email: <a href="mailto:long.datn2024@gmail.com" style="color: inherit; text-decoration: none;"><strong>long.datn2024@gmail.com</strong></a></p>
+                <p>📞 Liên hệ: <a href="tel:0854785566" style="color: inherit; text-decoration: none;"><strong>08 54 78
+                            55 66</strong></a> | 📧 Email: <a href="mailto:long.datn2024@gmail.com"
+                        style="color: inherit; text-decoration: none;"><strong>long.datn2024@gmail.com</strong></a></p>
             </div>
         </footer>
     </div>
@@ -96,8 +112,9 @@
     <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
     <script src="https://unpkg.com/jszip@3/dist/jszip.min.js"></script>
     <script src="https://unpkg.com/file-saver/dist/FileSaver.min.js"></script>
-    
+
     <!-- Load application scripts -->
     <script src="js/app.js"></script>
 </body>
+
 </html>
