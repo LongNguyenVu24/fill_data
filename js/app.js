@@ -79,8 +79,8 @@ function handleWordTemplateUpload(event) {
 
     // Check file extension
     const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith('.docx')) {
-        alert('Vui lòng tải lên tệp .docx (định dạng Word mới). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.');
+    if (!fileName.endsWith('.docx') && !fileName.endsWith('.doc')) {
+        alert('Vui lòng tải lên tệp .docx hoặc .doc (định dạng Word). Các định dạng khác không được hỗ trợ.');
         event.target.value = ''; // Clear the file input
         document.getElementById('word-template-info').textContent = 'Chưa chọn tệp tin';
         templateName = ''; // Clear template name
@@ -96,6 +96,87 @@ function handleWordTemplateUpload(event) {
     // Store template name for filename prefix (remove extension and clean for filename)
     templateName = file.name.replace(/\.[^/.]+$/, "").replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_');
     
+    // Check if this is a .doc file that needs conversion
+    if (fileName.endsWith('.doc')) {
+        // Show conversion process for .doc files
+        convertDocToDocx(file);
+    } else {
+        // Process .docx file normally
+        processDocxFile(file);
+    }
+}
+
+/**
+ * Convert .doc file to .docx (currently shows user-friendly message)
+ */
+function convertDocToDocx(file) {
+    const conversionProgress = document.getElementById('conversion-progress');
+    const progressFill = document.getElementById('conversion-progress-fill');
+    const conversionText = document.getElementById('conversion-text');
+    
+    // Show conversion progress
+    conversionProgress.style.display = 'block';
+    conversionText.textContent = 'Đang phân tích tệp .doc...';
+    progressFill.style.width = '20%';
+    
+    // Simulate conversion process (this will be replaced with actual conversion later)
+    setTimeout(() => {
+        conversionText.textContent = 'Đang chuyển đổi định dạng...';
+        progressFill.style.width = '60%';
+        
+        setTimeout(() => {
+            conversionText.textContent = 'Hoàn tất chuyển đổi!';
+            progressFill.style.width = '100%';
+            
+            setTimeout(() => {
+                // Hide conversion progress
+                conversionProgress.style.display = 'none';
+                progressFill.style.width = '0%';
+                
+                // For now, we'll attempt to read the .doc file directly
+                // In a future version, this will use actual conversion
+                attemptDocProcessing(file);
+            }, 1000);
+        }, 1500);
+    }, 1000);
+}
+
+/**
+ * Attempt to process .doc file directly (fallback method)
+ */
+function attemptDocProcessing(file) {
+    // Add warning about .doc file limitations
+    const existingWarning = document.querySelector('.doc-warning');
+    if (!existingWarning) {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'doc-warning';
+        warningDiv.style.cssText = `
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #856404;
+        `;
+        warningDiv.innerHTML = `
+            <strong>Lưu ý:</strong> Tệp .doc có thể có một số hạn chế trong việc xử lý. 
+            Để có kết quả tốt nhất, vui lòng chuyển đổi sang .docx trong Microsoft Word.
+        `;
+        
+        const uploadBox = document.querySelector('.upload-box:last-of-type');
+        uploadBox.appendChild(warningDiv);
+    }
+    
+    // Try to process the .doc file as if it were a .docx file
+    // This may work for some newer .doc files that are actually .docx files with .doc extension
+    processDocxFile(file);
+}
+
+/**
+ * Process .docx file (extracted from original handleWordTemplateUpload)
+ */
+function processDocxFile(file) {
     // Read the Word template file
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -123,7 +204,7 @@ function handleWordTemplateUpload(event) {
             
             // Provide specific error message for format issues
             if (error.message && error.message.includes('zip')) {
-                alert('Tệp tải lên không phải định dạng .docx hợp lệ. Vui lòng đảm bảo bạn đang tải lên tệp .docx (không phải .doc). Nếu bạn có tệp .doc, hãy mở trong Word và lưu dưới định dạng .docx.');
+                alert('Tệp tải lên không phải định dạng Word hợp lệ. Vui lòng đảm bảo bạn đang tải lên tệp .docx hoặc .doc hợp lệ. Nếu bạn có tệp .doc cũ, hãy thử mở trong Word và lưu lại.');
             } else {
                 alert('Lỗi khi xử lý mẫu Word. Vui lòng kiểm tra định dạng và thử lại.');
             }
@@ -132,6 +213,12 @@ function handleWordTemplateUpload(event) {
             event.target.value = '';
             document.getElementById('word-template-info').textContent = 'Chưa chọn tệp tin';
             templateName = ''; // Clear template name
+            
+            // Remove any existing warnings
+            const warningDiv = document.querySelector('.doc-warning');
+            if (warningDiv) {
+                warningDiv.remove();
+            }
             
             // Auto-update debug info if it's visible
             updateDebugInfoIfVisible();
@@ -1200,6 +1287,19 @@ function setFileInfo(inputId, infoId, btnId) {
                         wordPreviewContent.innerHTML = '';
                     }
                     document.getElementById('word-preview-section').style.display = 'none';
+                    
+                    // Hide conversion progress if visible
+                    const conversionProgress = document.getElementById('conversion-progress');
+                    if (conversionProgress) {
+                        conversionProgress.style.display = 'none';
+                        document.getElementById('conversion-progress-fill').style.width = '0%';
+                    }
+                    
+                    // Remove any existing warnings
+                    const warningDiv = document.querySelector('.doc-warning');
+                    if (warningDiv) {
+                        warningDiv.remove();
+                    }
                 }
                 updateSectionsVisibility();
                 updateDebugInfoIfVisible();

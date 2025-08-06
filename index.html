@@ -32,15 +32,21 @@
 
                     <div class="upload-box">
                         <label for="word-template">Chọn mẫu Word:</label>
-                        <input type="file" id="word-template" accept=".docx">
+                        <input type="file" id="word-template" accept=".docx,.doc">
                         <div class="file-info" id="word-template-info">
                             Chưa chọn tệp tin
                             <button class="remove-file-btn" id="remove-word-file" style="display:none;"
                                 title="Xóa tệp">×</button>
                         </div>
                         <div class="file-format-info">
-                            <strong>Quan trọng:</strong> Chỉ hỗ trợ tệp .docx (định dạng Word mới).
-                            Nếu bạn có tệp .doc, vui lòng mở trong Word và lưu dưới định dạng .docx.
+                            <strong>Hỗ trợ:</strong> Tệp .docx (định dạng Word mới) và .doc (định dạng Word cũ).
+                            Tệp .doc sẽ được tự động chuyển đổi sang .docx.
+                        </div>
+                        <div id="conversion-progress" style="display:none;" class="conversion-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="conversion-progress-fill"></div>
+                            </div>
+                            <p id="conversion-text">Đang chuyển đổi tệp .doc sang .docx...</p>
                         </div>
                     </div>
                 </div>

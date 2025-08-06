@@ -1,0 +1,28 @@
+{
+  "name": "fill-data",
+  "version": "1.0.0",
+  "description": "A web app to fill Word document templates with data from Excel files, supporting both .doc and .docx formats",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "@nativedocuments/docx-wasm": "2.2.13-1561490777"
+  },
+  "keywords": [
+    "excel",
+    "word",
+    "document",
+    "template",
+    "docx",
+    "doc",
+    "conversion"
+  ],
+  "author": "LongNguyenVu24",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LongNguyenVu24/fill_data.git"
+  }
+}

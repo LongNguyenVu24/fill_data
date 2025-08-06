@@ -132,6 +132,39 @@ h3 {
     color: #856404;
 }
 
+/* Conversion Progress Styles */
+.conversion-progress {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+}
+
+.conversion-progress .progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.conversion-progress .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #81C784);
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+
+.conversion-progress p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1976d2;
+    font-weight: 500;
+}
+
 /* Mapping Styles */
 .mapping-item {
     display: flex;

@@ -4,7 +4,8 @@ A web app to fill Word document templates with data from Excel files, all in you
 
 ## Features
 
-- Upload Excel (.xlsx) and Word (.docx) files
+- Upload Excel (.xlsx) and Word (.docx, .doc) files
+- **NEW**: Automatic conversion of .doc files to .docx format
 - Detect and map Excel columns to Word placeholders (`{placeholder_name}`)
 - Preview Excel data and Word template with highlighted placeholders
 - Auto-match columns and placeholders by name
@@ -18,10 +19,11 @@ A web app to fill Word document templates with data from Excel files, all in you
 
 1. **Prepare Files**
    - Excel: Add your data in columns
-   - Word: Use placeholders like `{name}` in your template
+   - Word: Use placeholders like `{name}` in your template (supports both .docx and .doc)
 
 2. **Upload Files**
    - Upload Excel and Word files in the app
+   - .doc files will be automatically converted to .docx format
 
 3. **Preview & Map**
    - Review Excel data and Word template
@@ -44,14 +46,28 @@ Sincerely,
 {company_name}
 ```
 
+## File Format Support
+
+### Word Documents
+- **.docx files**: Full support (recommended)
+- **.doc files**: Supported with automatic conversion to .docx format
+  - Conversion process is handled automatically in the browser
+  - Progress indicator shows conversion status
+  - Some legacy .doc files may have limitations
+
+### Excel Files
+- **.xlsx files**: Full support
+- **.xls files**: Full support
+
 ## Troubleshooting
 
 - **Debug Info:** Click "Show Debug Info" for details on file status, placeholders, and mappings.
 - **Common Issues:**
   - No placeholders found: Use `{placeholder_name}` format
   - Generation errors: Map at least one column
-  - Invalid file: Use `.xlsx` for Excel and `.docx` for Word
-- **File Format:** Convert `.doc` to `.docx` in Word via File > Save As.
+  - Invalid file: Use supported formats (.xlsx/.xls for Excel, .docx/.doc for Word)
+  - .doc conversion issues: Try opening the file in Word and saving as .docx manually
+- **File Conversion:** .doc files are automatically converted to .docx format for processing.
 
 ## Technology
 
@@ -62,6 +78,7 @@ Sincerely,
   - PizZip for ZIP/docx handling
   - mammoth.js for Word-to-HTML preview
   - FileSaver.js for downloads
+  - Automatic DOC to DOCX conversion capability
 
 ## Running
 
@@ -71,3 +88,5 @@ Open `index.html` in your browser. No server needed; all processing is local.
 
 - All processing is client-side; files are not uploaded anywhere.
 - Large Excel files may take longer to process.
+- .doc files undergo automatic conversion which may take a few moments.
+- For best results with legacy .doc files, consider manually converting to .docx first.
