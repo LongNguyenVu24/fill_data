@@ -731,7 +731,7 @@ async function generateMultipleDocuments(mappingConfig) {
             // Update progress
             const progress = ((i + 1) / totalRows) * 100;
             progressFill.style.width = progress + '%';
-            progressText.textContent = `Đang xử lý hàng ${i + 1} / ${totalRows}...`;
+            progressText.textContent = `Đang xử lý ${i + 1} / ${totalRows}...`;
             
             // Allow UI to update
             await new Promise(resolve => setTimeout(resolve, 50));
