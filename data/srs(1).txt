@@ -1,0 +1,7 @@
+chọn loại hd (xd / 0 xd)
+
+tên file (ghép họ + tên)
+
+bỏ footer
+
+sửa tiêu đề (ứng dụng AI trong công việc)
