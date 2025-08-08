@@ -1,7 +1,7 @@
-chọn loại hd (xd / 0 xd)
+chọn loại hd (xd / 0 xd) (done)
 
-tên file (ghép họ + tên)
+tên file (ghép họ + tên) (done)
 
-bỏ footer
+bỏ footer (done)
 
 sửa tiêu đề (ứng dụng AI trong công việc)
